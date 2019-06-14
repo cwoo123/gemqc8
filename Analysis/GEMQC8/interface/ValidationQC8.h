@@ -118,6 +118,17 @@ private:
   float confTestHitZ[30];
   int nTrajHit; // number of trajHits
   int nTrajRecHit; // number of confirmed trajHits
+
+  TTree *genTree;
+  float genMuPx;
+  float genMuPy;
+  float genMuPz;
+  float genMuPt;
+  float genMuTheta;
+  float genMuPhi;
+  float genMuX;
+  float genMuY;
+  float genMuZ;
 };
 
 #endif

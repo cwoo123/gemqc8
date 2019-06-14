@@ -20,7 +20,7 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
   InputTagToken_TI = consumes<vector<int>>(cfg.getParameter<edm::InputTag>("chNoInputLabel"));
   InputTagToken_TT = consumes<vector<unsigned int>>(cfg.getParameter<edm::InputTag>("seedTypeInputLabel"));
   InputTagToken_DG = consumes<GEMDigiCollection>(cfg.getParameter<edm::InputTag>("gemDigiLabel"));
-  if ( isMC ) InputTagToken_US = consumes<edm::HepMCProduct>(cfg.getParameter<edm::InputTag>("genVtx"));
+  if (isMC) InputTagToken_US = consumes<edm::HepMCProduct>(cfg.getParameter<edm::InputTag>("genVtx"));
   edm::ParameterSet serviceParameters = cfg.getParameter<edm::ParameterSet>("ServiceParameters");
   theService = new MuonServiceProxy(serviceParameters);
   minCLS = cfg.getParameter<double>("minClusterSize");
@@ -73,6 +73,21 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
   tree->Branch("confTestHitZ",&confTestHitZ,"confTestHitZ[30]/F");
   tree->Branch("nTrajHit",&nTrajHit,"nTrajHit/I");
   tree->Branch("nTrajRecHit",&nTrajRecHit,"nTrajRecHit/I");
+
+  if (isMC)
+  {
+    // Tree for gen events
+    genTree = fs->make<TTree>("genTree", "gen info for QC8");
+    genTree->Branch("genMuPx",&genMuPx,"genMuPx/F");
+    genTree->Branch("genMuPy",&genMuPy,"genMuPy/F");
+    genTree->Branch("genMuPz",&genMuPz,"genMuPz/F");
+    genTree->Branch("genMuPt",&genMuPt,"genMuPt/F");
+    genTree->Branch("genMuTheta",&genMuTheta,"genMuTheta/F");
+    genTree->Branch("genMuPhi",&genMuPhi,"genMuPhi/F");
+    genTree->Branch("genMuX",&genMuX,"genMuX/F");
+    genTree->Branch("genMuY",&genMuY,"genMuY/F");
+    genTree->Branch("genMuZ",&genMuZ,"genMuZ/F");
+  }
 
   printf("End of ValidationQC8::ValidationQC8() at %s\n", asctime(localtime(&rawTime)));
 }
@@ -163,6 +178,19 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
   trajPz = -999.9;
   nTrajHit = 0;
   nTrajRecHit = 0;
+
+  if (isMC)
+  {
+    genMuPx = -999.9;
+    genMuPy = -999.9;
+    genMuPz = -999.9;
+    genMuPt = -999.9;
+    genMuTheta = -999.9;
+    genMuPhi = -999.9;
+    genMuX = -999.9;
+    genMuY = -999.9;
+    genMuZ = -999.9;
+  }
 
   for (int i=0; i<30; i++)
   {
@@ -359,6 +387,30 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
     trajPx = gvecTrack.x();
     trajPy = gvecTrack.y();
     trajPz = gvecTrack.z();
+
+    if (isMC)
+    {
+      HepMC::GenParticle *genMuon = NULL;
+
+      edm::Handle<edm::HepMCProduct> genVtx;
+      e.getByToken( this->InputTagToken_US, genVtx);
+      genMuon = genVtx->GetEvent()->barcode_to_particle(1);
+
+      genMuPx = float(genMuon->momentum().x());
+      genMuPy = float(genMuon->momentum().y());
+      genMuPz = float(genMuon->momentum().z());
+      genMuPt = float(genMuon->momentum().perp());
+      genMuTheta = float(genMuon->momentum().theta());
+      genMuPhi = float(genMuon->momentum().phi());
+
+      float dUnitGen = 0.1;
+
+      genMuX = float(dUnitGen * genMuon->production_vertex()->position().x());
+      genMuY = float(dUnitGen * genMuon->production_vertex()->position().y());
+      genMuZ = float(dUnitGen * genMuon->production_vertex()->position().z());
+
+      genTree->Fill();
+    }
 
     recHitsPerTrack->Fill(size(bestTraj.recHits()));
 
