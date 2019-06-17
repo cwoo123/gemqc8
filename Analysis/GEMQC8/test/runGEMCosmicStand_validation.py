@@ -12,7 +12,7 @@ import FWCore.ParameterSet.Config as cms
 import configureRun_cfi as runConfig
 
 # options
-import FWCore.ParameterSet.VarParsing as VarParsing
+import FWCore.ParameterrSet.VarParsing as VarParsing
 options = VarParsing.VarParsing('analysis')
 
 run_number = runConfig.RunNumber

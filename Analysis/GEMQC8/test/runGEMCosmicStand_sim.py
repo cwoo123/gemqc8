@@ -10,12 +10,13 @@ print datetime.datetime.now()
 import FWCore.ParameterSet.Config as cms
 import configureRun_cfi as runConfig
 
-
 # options
 import FWCore.ParameterSet.VarParsing as VarParsing
 options = VarParsing.VarParsing('analysis')
 
-options.register("runNum",1,
+run_number = runConfig.RunNumber
+
+options.register("runNum",run_number,
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Run number")
@@ -210,6 +211,7 @@ process.GEMCosmicMuonForQC8.ServiceParameters.RPCLayers = cms.bool(False)
 pyhtonModulesPath = os.path.abspath("runGEMCosmicStand_fast_efficiency.py").split('QC8Test')[0]+'QC8Test/src/Analysis/GEMQC8/python/'
 sys.path.insert(1,pyhtonModulesPath)
 from readCertEvtsFromFile import GetCertifiedEvents
+
 certEvts = GetCertifiedEvents(run_number)
 
 process.ValidationQC8 = cms.EDProducer('ValidationQC8',
