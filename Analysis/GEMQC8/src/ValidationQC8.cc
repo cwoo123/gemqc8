@@ -52,15 +52,15 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
   residualPhi = fs->make<TH1D>("residualPhi","residualPhi",400,-5,5);
   residualEta = fs->make<TH1D>("residualEta","residualEta",200,-10,10);
   recHitsPerTrack = fs->make<TH1D>("recHitsPerTrack","recHits per reconstructed track",15,0,15);
-  trajMuAngX = fs->make<TH1D>("trajMuAngX","trajAngX (XZ plane)",100,-1.5708,1.5708); //// check synts
-  trajMuAngY = fs->make<TH1D>("trajMuAngY","trajAngY (YZ plane)",100,-1.5708,1.5708);
+  trajMuAngX = fs->make<TH1D>("trajMuAngX","trajAngX (XZ plane)",1000,-1,1);
+  trajMuAngY = fs->make<TH1D>("trajMuAngY","trajAngY (YZ plane)",1000,-0.8,0.8);
 
 
   if(isMC){
-    genMuAngX = fs->make<TH1D>("genMuAngX","genAngX (XZ plane)",100,-1.5708,1.5708); //// check synts
-    genMuAngY = fs->make<TH1D>("genMuAngY","genAngY (YZ plane)",100,-1.5708,1.5708);
-    deltaMuAngX = fs->make<TH1D>("deltaMuAngPx","trajAngX - genAngX (XZ plane)",100,-1.5708,1.5708);
-    deltaMuAngY = fs->make<TH1D>("deltaMuAngPy","trajAngY - genAngY (YZ plane)",100,-1.5708,1.5708);
+    genMuAngX = fs->make<TH1D>("genMuAngX","genAngX (XZ plane)",1000,-1,1);
+    genMuAngY = fs->make<TH1D>("genMuAngY","genAngY (YZ plane)",1000,-0.8,0.8);
+    deltaMuAngX = fs->make<TH1D>("deltaMuAngPx","trajAngX - genAngX (XZ plane)",1000,-0.1,0.1);
+    deltaMuAngY = fs->make<TH1D>("deltaMuAngPy","trajAngY - genAngY (YZ plane)",1000,-0.7,0.7);
   }
 
   // Tree branches declaration
@@ -196,7 +196,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
   trajPz = -999.9;
   nTrajHit = 0;
   nTrajRecHit = 0;
-  trajAngX = 999.9; // check
+  trajAngX = 999.9;
   trajAngY = 999.9;
 
 
@@ -211,7 +211,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
     genMuX = -999.9;
     genMuY = -999.9;
     genMuZ = -999.9;
-    genAngX = -999.9; //ch
+    genAngX = -999.9;
     genAngY = -999.9;
 
   }
@@ -411,7 +411,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
     trajPx = gvecTrack.x();
     trajPy = gvecTrack.y();
     trajPz = gvecTrack.z();
-    trajAngX = atan(trajPx/trajPz); // check, declaration/initialisation
+    trajAngX = atan(trajPx/trajPz);
     trajAngY = atan(trajPy/trajPz);
 
     trajMuAngX->Fill(trajAngX);
@@ -431,7 +431,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
       genMuPt = float(genMuon->momentum().perp());
       genMuTheta = float(genMuon->momentum().theta());
       genMuPhi = float(genMuon->momentum().phi());
-      genAngX = atan(genMuPx/genMuPz); // check declaration/initialisation
+      genAngX = atan(genMuPx/genMuPz); 
       genAngY = atan(genMuPy/genMuPz);
 
       genMuAngX->Fill(genAngX);
