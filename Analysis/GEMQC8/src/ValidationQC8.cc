@@ -85,6 +85,9 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
   tree->Branch("confTestHitZ",&confTestHitZ,"confTestHitZ[30]/F");
   tree->Branch("nTrajHit",&nTrajHit,"nTrajHit/I");
   tree->Branch("nTrajRecHit",&nTrajRecHit,"nTrajRecHit/I");
+  /////???
+  tree->Branch("trajAngX",&trajAngX,"trajAngX/F");
+  tree->Branch("trajAngY",&trajAngY,"trajAngY/F");
 
   if (isMC)
   {
@@ -99,6 +102,9 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
     genTree->Branch("genMuX",&genMuX,"genMuX/F");
     genTree->Branch("genMuY",&genMuY,"genMuY/F");
     genTree->Branch("genMuZ",&genMuZ,"genMuZ/F");
+    ///???
+    genTree->Branch("genAngX",&genAngX,"genAngX/F");
+    genTree->Branch("genAngY",&genAngY,"genAngY/F");
   }
 
   printf("End of ValidationQC8::ValidationQC8() at %s\n", asctime(localtime(&rawTime)));

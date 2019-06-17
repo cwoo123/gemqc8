@@ -124,21 +124,6 @@ process.configurationMetadata = cms.untracked.PSet(
                                                    version = cms.untracked.string('$Revision: 1.19 $')
                                                    )
 
-# Output definition
-process.FEVTDEBUGHLToutput = cms.OutputModule("PoolOutputModule",
-                                              SelectEvents = cms.untracked.PSet(
-                                                                                SelectEvents = cms.vstring('generation_step')
-                                                                                ),
-                                              dataset = cms.untracked.PSet(
-                                                                           dataTier = cms.untracked.string('GEN-SIM'),
-                                                                           filterName = cms.untracked.string('')
-                                                                           ),
-                                              eventAutoFlushCompressedSize = cms.untracked.int32(10485760),
-                                              fileName = cms.untracked.string('file:'+strOutput),
-                                              outputCommands = cms.untracked.vstring( ('keep *')),
-                                              splitLevel = cms.untracked.int32(0)
-                                              )
-
 # Additional output definition
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
@@ -218,7 +203,11 @@ process.GEMCosmicMuonForQC8.ServiceParameters.GEMLayers = cms.untracked.bool(Tru
 process.GEMCosmicMuonForQC8.ServiceParameters.CSCLayers = cms.untracked.bool(False)
 process.GEMCosmicMuonForQC8.ServiceParameters.RPCLayers = cms.bool(False)
 
-fScale = 1.0
+# Fast Efficiency - Get certified events from file
+pyhtonModulesPath = os.path.abspath("runGEMCosmicStand_fast_efficiency.py").split('QC8Test')[0]+'QC8Test/src/Analysis/GEMQC8/python/'
+sys.path.insert(1,pyhtonModulesPath)
+from readCertEvtsFromFile import GetCertifiedEvents
+certEvts = GetCertifiedEvents(run_number)
 
 process.ValidationQC8 = cms.EDProducer('ValidationQC8',
                                          process.MuonServiceProxy,
@@ -241,6 +230,7 @@ process.ValidationQC8 = cms.EDProducer('ValidationQC8',
                                          isMC = cms.bool(True),
                                          SuperChamberType = cms.vstring(SuperChType),
                                          SuperChamberSeedingLayers = cms.vdouble(SuperChSeedingLayers),
+                                         tripEvents = cms.vstring(certEvts),
                                          MuonSmootherParameters = cms.PSet(
                                                                            PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
                                                                            PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
@@ -260,7 +250,6 @@ process.digitisation_step = cms.Path(process.mix+process.simMuonGEMDigis)
 process.reconstruction_step = cms.Path(process.gemPacker+process.rawDataCollector+process.muonGEMDigis+process.gemLocalReco+process.GEMCosmicMuonForQC8)
 process.genfiltersummary_step = cms.EndPath(process.genFilterSummary)
 process.endjob_step = cms.EndPath(process.endOfProcess)
-process.FEVTDEBUGHLToutput_step = cms.EndPath(process.FEVTDEBUGHLToutput)
 process.validation_step = cms.Path(process.ValidationQC8)
 process.digitisation_step.remove(process.simEcalTriggerPrimitiveDigis)
 process.digitisation_step.remove(process.simEcalDigis)
@@ -280,8 +269,7 @@ process.schedule = cms.Schedule(process.generation_step,
                                 process.digitisation_step,
                                 process.reconstruction_step,
                                 process.validation_step,
-                                process.endjob_step,
-                                process.FEVTDEBUGHLToutput_step,
+                                process.endjob_step
                                 )
 
 process.RandomNumberGeneratorService.generator = cms.PSet(
