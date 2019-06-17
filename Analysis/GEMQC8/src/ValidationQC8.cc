@@ -59,8 +59,8 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
   if(isMC){
     genMuAngX = fs->make<TH1D>("genMuAngX","genAngX (XZ plane)",1000,-1,1);
     genMuAngY = fs->make<TH1D>("genMuAngY","genAngY (YZ plane)",1000,-0.8,0.8);
-    deltaMuAngX = fs->make<TH1D>("deltaMuAngPx","trajAngX - genAngX (XZ plane)",1000,-0.1,0.1);
-    deltaMuAngY = fs->make<TH1D>("deltaMuAngPy","trajAngY - genAngY (YZ plane)",1000,-0.7,0.7);
+    deltaMuAngX = fs->make<TH1D>("deltaMuAngX","trajAngX - genAngX (XZ plane)",1000,-0.1,0.1);
+    deltaMuAngY = fs->make<TH1D>("deltaMuAngY","trajAngY - genAngY (YZ plane)",1000,-0.7,0.7);
   }
 
   // Tree branches declaration
@@ -431,7 +431,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
       genMuPt = float(genMuon->momentum().perp());
       genMuTheta = float(genMuon->momentum().theta());
       genMuPhi = float(genMuon->momentum().phi());
-      genAngX = atan(genMuPx/genMuPz); 
+      genAngX = atan(genMuPx/genMuPz);
       genAngY = atan(genMuPy/genMuPz);
 
       genMuAngX->Fill(genAngX);
