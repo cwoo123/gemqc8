@@ -3,10 +3,13 @@
 # Revision: 1.19
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v
 # with command line options: SingleMuPt100_cfi -s GEN,SIM,DIGI,L1,DIGI2RAW,RAW2DIGI,L1Reco,RECO --conditions auto:run2_mc --magField 38T_PostLS1 --datatier GEN-SIM --geometry GEMCosmicStand --eventcontent FEVTDEBUGHLT --era phase2_muon -n 100 --fileout out_reco.root
+import sys
+import os
 import datetime
 print datetime.datetime.now()
 import FWCore.ParameterSet.Config as cms
 import configureRun_cfi as runConfig
+
 
 # options
 import FWCore.ParameterSet.VarParsing as VarParsing
