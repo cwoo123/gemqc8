@@ -69,7 +69,7 @@ def getHotStripsTable(run_num):
     query = "select * from CMS_GEM_MUON_VIEW.QC8_GEM_MASKED_STRIPS_HOT_V_RH where RUN_NUMBER="+str(run_num)
     cur.execute(query)
 
-    hotStripsTablesPath = os.path.abspath("dumpDBtables.py").split('QC8Test')[0] + 'QC8Test/src/Analysis/GEMQC8/data/HotStripsTables/'
+    hotStripsTablesPath = os.path.abspath("dumpDBtables.py").split('QC8Test')[0] + 'QC8Test/src/Analysis/GEMQC8/data/Dashboard/HotStripsTables/'
     outfile_name = hotStripsTablesPath + "Test_HotStrips_run{0}.csv".format(run_num)
 
     with open(outfile_name,"w+") as outfile:
@@ -97,7 +97,7 @@ def getDeadStripsTable(run_num):
     query = "select * from CMS_GEM_MUON_VIEW.QC8_GEM_MASKED_STRIPS_DEAD_V_RH where RUN_NUMBER="+str(run_num)
     cur.execute(query)
 
-    deadStripsTablesPath = os.path.abspath("dumpDBtables.py").split('QC8Test')[0] + 'QC8Test/src/Analysis/GEMQC8/data/DeadStripsTables/'
+    deadStripsTablesPath = os.path.abspath("dumpDBtables.py").split('QC8Test')[0] + 'QC8Test/src/Analysis/GEMQC8/data/Dashboard/DeadStripsTables/'
     outfile_name = deadStripsTablesPath + "Test_DeadStrips_run{0}.csv".format(run_num)
 
     with open(outfile_name,"w+") as outfile:

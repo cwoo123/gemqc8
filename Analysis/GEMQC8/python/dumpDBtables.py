@@ -89,7 +89,7 @@ def getHotStripsTable(run_num):
     print "\nSuccesfully done!\n"
 
 def getDeadStripsTable(run_num):
-    print "\nDownloading HotStripsTable for run {0}".format(run_num)
+    print "\nDownloading DeadStripsTable for run {0}".format(run_num)
 
     db = cx_Oracle.connect('GEM_904_COND/904CondDB@INT2R')
     cur = db.cursor()
