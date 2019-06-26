@@ -55,7 +55,7 @@ def getVFATTable(run_num):
             run_begin           = result[8]
             run_end             = result[9]
             line = str(chamber_name) + "," + str(vfat_posn) + "," + str(efficiency) + "," + str(efficiency_error)  + "," + str(cluster_size_avg) + \
-                    "," + str(cluster_size_sigma) + "," + str(percent_masked) + "," + str(run_number) + "," str(run_begin) + "," + str(run_end) + "\n"
+                    "," + str(cluster_size_sigma) + "," + str(percent_masked) + "," + str(run_number) + "," + str(run_begin) + "," + str(run_end) + "\n"
             outfile.write(line)
 
     print "\nSuccesfully done!\n"
