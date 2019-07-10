@@ -21,7 +21,7 @@ options.register("runNum",run_number,
                  VarParsing.VarParsing.varType.int,
                  "Run number")
 
-options.register("eventsPerJob",50000,
+options.register("eventsPerJob",500000,
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "The number of events (in each file)")
@@ -186,6 +186,12 @@ process.simSiStripDigis = cms.EDAlias()
 process.load('RecoMuon.TrackingTools.MuonServiceProxy_cff')
 process.MuonServiceProxy.ServiceParameters.Propagators.append('StraightLinePropagator')
 
+# Fast Efficiency - Get certified events from file
+pyhtonModulesPath = os.path.abspath("runGEMCosmicStand_fast_efficiency.py").split('QC8Test')[0]+'QC8Test/src/Analysis/GEMQC8/python/'
+sys.path.insert(1,pyhtonModulesPath)
+from readCertEvtsFromFile import GetCertifiedEvents
+certEvts = GetCertifiedEvents(run_number)
+
 process.GEMCosmicMuonForQC8 = cms.EDProducer("GEMCosmicMuonForQC8",
                                              process.MuonServiceProxy,
                                              gemRecHitLabel = cms.InputTag("gemRecHits"),
@@ -195,6 +201,8 @@ process.GEMCosmicMuonForQC8 = cms.EDProducer("GEMCosmicMuonForQC8",
                                              trackResX = cms.double(runConfig.trackResX),
                                              trackResY = cms.double(runConfig.trackResY),
                                              MulSigmaOnWindow = cms.double(runConfig.MulSigmaOnWindow),
+					     minNumberOfRecHitsPerTrack = cms.uint32(runConfig.minRecHitsPerTrack),
+					     tripEvents = cms.vstring(certEvts),
                                              SuperChamberType = cms.vstring(SuperChType),
                                              SuperChamberSeedingLayers = cms.vdouble(SuperChSeedingLayers),
                                              MuonSmootherParameters = cms.PSet(
@@ -207,41 +215,33 @@ process.GEMCosmicMuonForQC8.ServiceParameters.GEMLayers = cms.untracked.bool(Tru
 process.GEMCosmicMuonForQC8.ServiceParameters.CSCLayers = cms.untracked.bool(False)
 process.GEMCosmicMuonForQC8.ServiceParameters.RPCLayers = cms.bool(False)
 
-# Fast Efficiency - Get certified events from file
-pyhtonModulesPath = os.path.abspath("runGEMCosmicStand_fast_efficiency.py").split('QC8Test')[0]+'QC8Test/src/Analysis/GEMQC8/python/'
-sys.path.insert(1,pyhtonModulesPath)
-from readCertEvtsFromFile import GetCertifiedEvents
-
-certEvts = GetCertifiedEvents(run_number)
-
 process.ValidationQC8 = cms.EDProducer('ValidationQC8',
-                                         process.MuonServiceProxy,
-                                         verboseSimHit = cms.untracked.int32(1),
-                                         simInputLabel = cms.InputTag('g4SimHits',"MuonGEMHits"),
-                                         genVtx = cms.InputTag("generator","unsmeared", "RECO"),
-                                         recHitsInputLabel = cms.InputTag('gemRecHits'),
-                                         tracksInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-                                         seedInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-                                         trajInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-                                         chNoInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-                                         seedTypeInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-                                         genParticleLabel = cms.InputTag('genParticles','','RECO'),
-                                         gemDigiLabel = cms.InputTag("muonGEMDigis","","RECO"),
-                                         nBinGlobalZR = cms.untracked.vdouble(200,200,200,150,180,250),
-                                         RangeGlobalZR = cms.untracked.vdouble(564,572,786,794,786,802,110,260,170,350,100,350),
-                                         maxClusterSize = cms.double(runConfig.maxClusterSize),
-                                         minClusterSize = cms.double(runConfig.minClusterSize),
-                                         maxResidual = cms.double(runConfig.maxResidual),
-                                         isMC = cms.bool(True),
-                                         SuperChamberType = cms.vstring(SuperChType),
-                                         SuperChamberSeedingLayers = cms.vdouble(SuperChSeedingLayers),
-                                         tripEvents = cms.vstring(certEvts),
-                                         MuonSmootherParameters = cms.PSet(
-                                                                           PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
-                                                                           PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
-                                                                           RescalingFactor = cms.double(5.0)
-                                                                           ),
-                                         )
+                                       process.MuonServiceProxy,
+                                       verboseSimHit = cms.untracked.int32(1),
+                                       simInputLabel = cms.InputTag('g4SimHits',"MuonGEMHits"),
+                                       genVtx = cms.InputTag("generator","unsmeared", "RECO"),
+                                       recHitsInputLabel = cms.InputTag('gemRecHits'),
+                                       tracksInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
+                                       seedInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
+                                       trajInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
+                                       chNoInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
+                                       seedTypeInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
+                                       genParticleLabel = cms.InputTag('genParticles','','RECO'),
+                                       gemDigiLabel = cms.InputTag("muonGEMDigis","","RECO"),
+                                       nBinGlobalZR = cms.untracked.vdouble(200,200,200,150,180,250),
+                                       RangeGlobalZR = cms.untracked.vdouble(564,572,786,794,786,802,110,260,170,350,100,350),
+                                       maxClusterSize = cms.double(runConfig.maxClusterSize),
+                                       minClusterSize = cms.double(runConfig.minClusterSize),
+                                       maxResidual = cms.double(runConfig.maxResidual),
+                                       isMC = cms.bool(True),
+                                       SuperChamberType = cms.vstring(SuperChType),
+                                       SuperChamberSeedingLayers = cms.vdouble(SuperChSeedingLayers),
+                                       tripEvents = cms.vstring(certEvts),
+                                       MuonSmootherParameters = cms.PSet(PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
+                                                                         PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
+                                                                         RescalingFactor = cms.double(5.0)
+                                                                         )
+                                        )
 
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string('sim_'+strOutput)

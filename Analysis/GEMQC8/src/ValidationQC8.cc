@@ -1,11 +1,5 @@
 #include "Analysis/GEMQC8/interface/ValidationQC8.h"
 
-#include <iomanip>
-
-#include <TCanvas.h>
-
-#include <TMath.h>
-
 using namespace std;
 using namespace edm;
 
@@ -22,7 +16,7 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
   InputTagToken_TI = consumes<vector<int>>(cfg.getParameter<edm::InputTag>("chNoInputLabel"));
   InputTagToken_TT = consumes<vector<unsigned int>>(cfg.getParameter<edm::InputTag>("seedTypeInputLabel"));
   InputTagToken_DG = consumes<GEMDigiCollection>(cfg.getParameter<edm::InputTag>("gemDigiLabel"));
-  if (isMC) InputTagToken_US = consumes<edm::HepMCProduct>(cfg.getParameter<edm::InputTag>("genVtx"));
+  if ( isMC ) InputTagToken_US = consumes<edm::HepMCProduct>(cfg.getParameter<edm::InputTag>("genVtx"));
   edm::ParameterSet serviceParameters = cfg.getParameter<edm::ParameterSet>("ServiceParameters");
   theService = new MuonServiceProxy(serviceParameters);
   minCLS = cfg.getParameter<double>("minClusterSize");
@@ -46,9 +40,11 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
   digiStrips = fs->make<TH3D>("digiStrips","digi per strip",384,0,384,8,0,8,30,0,30);
   digisPerEvtPerCh = fs->make<TH2D>("digisPerEvtPerCh","digis per event per chamber",30,0,30,20,0,20);
   recHits3D = fs->make<TH3D>("recHits3D","recHits 3D map",200,-100,100,156,-61,95,83,-12,154); // volume defined by the scintillators
-  recHits2DPerLayer = fs->make<TH3D>("recHits2DPerLayer","recHits per layer",400,-100,100,8,0,8,10,0,10);
+  recHits2DPerLayer = fs->make<TH3D>("recHits2DPerLayer","recHits per layer",2000,-100,100,8,0,8,10,0,10);
+  associatedHits2DPerLayer = fs->make<TH3D>("associatedHits2DPerLayer","Associated recHits to track per layer",2000,-100,100,8,0,8,10,0,10);
   recHitsPerEvt = fs->make<TH1D>("recHitsPerEvt","recHits per event",1000,0,1000);
   clusterSize = fs->make<TH3D>("clusterSize","clusterSize per chamber per eta partition",30,0,30,8,0,8,20,0,20);
+  associatedHitsClusterSize = fs->make<TH3D>("associatedHitsClusterSize","clusterSize of associated hits per chamber per eta partition",30,0,30,8,0,8,20,0,20);
   residualPhi = fs->make<TH1D>("residualPhi","residualPhi",400,-5,5);
   residualEta = fs->make<TH1D>("residualEta","residualEta",200,-10,10);
   recHitsPerTrack = fs->make<TH1D>("recHitsPerTrack","recHits per reconstructed track",15,0,15);
@@ -85,11 +81,8 @@ ValidationQC8::ValidationQC8(const edm::ParameterSet& cfg): GEMBaseValidation(cf
   tree->Branch("confTestHitZ",&confTestHitZ,"confTestHitZ[30]/F");
   tree->Branch("nTrajHit",&nTrajHit,"nTrajHit/I");
   tree->Branch("nTrajRecHit",&nTrajRecHit,"nTrajRecHit/I");
-  /////???
-  tree->Branch("trajAngX",&trajAngX,"trajAngX/F");
-  tree->Branch("trajAngY",&trajAngY,"trajAngY/F");
 
-  if (isMC)
+if (isMC)
   {
     // Tree for gen events
     genTree = fs->make<TTree>("genTree", "gen info for QC8");
@@ -199,7 +192,6 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
   trajAngX = 999.9;
   trajAngY = 999.9;
 
-
   if (isMC)
   {
     genMuPx = -999.9;
@@ -213,7 +205,6 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
     genMuZ = -999.9;
     genAngX = -999.9;
     genAngY = -999.9;
-
   }
 
   for (int i=0; i<30; i++)
@@ -284,6 +275,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
     }
   }
 
+
   for (int i=0; i<30; i++)
   {
     digisPerEvtPerCh->Fill(i,nDigisPerCh[i]);
@@ -313,7 +305,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
     GlobalPoint recHitGP = GEMGeometry_->idToDet((*rechit).gemId())->surface().toGlobal(rechit->localPosition());
     recHits3D->Fill(recHitGP.x(),recHitGP.y(),recHitGP.z());
 
-    recHits2DPerLayer->Fill(recHitGP.x(),hitID.roll()-1,chIdRecHit % 10);
+    recHits2DPerLayer->Fill(recHitGP.x(),hitID.roll()-1,chIdRecHit%10);
 
     nrecHit++;
   }
@@ -360,6 +352,8 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
       }
     }
 
+
+
     // Select trajectory correspondent to test chamber excluded from fit
 
     std::vector<int>::const_iterator it1 = idxChTraj->begin();
@@ -387,6 +381,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
       it4++;
       it5++;
     }
+
 
     if ( it1 == idxChTraj->end() ) continue;
 
@@ -416,6 +411,8 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
 
     trajMuAngX->Fill(trajAngX);
     trajMuAngY->Fill(trajAngY);
+    recHitsPerTrack->Fill(size(bestTraj.recHits()));
+
 
     if (isMC)
     {
@@ -446,11 +443,8 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
       genMuZ = float(dUnitGen * genMuon->production_vertex()->position().z());
 
       genTree->Fill();
-
-
     }
 
-    recHitsPerTrack->Fill(size(bestTraj.recHits()));
 
     // Extrapolation to all the chambers, test chamber selected for efficiency calculation
 
@@ -496,6 +490,7 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
         int n_strip = ch.etaPartition(mRoll)->nstrips();
         double min_x = ch.etaPartition(mRoll)->centreOfStrip(1).x();
         double max_x = ch.etaPartition(mRoll)->centreOfStrip(n_strip).x();
+
 
         if ( (tlp.x()>(min_x)) & (tlp.x() < (max_x)) )
         {
@@ -568,16 +563,33 @@ void ValidationQC8::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
 
             if(tmpRecHit)
             {
-              Global3DPoint recHitGP = tmpRecHit->globalPosition();
-              confTestHitX[index] = recHitGP.x();
-              confTestHitY[index] = recHitGP.y();
-              confTestHitZ[index] = recHitGP.z();
+              Global3DPoint tempHitGP = tmpRecHit->globalPosition();
+              confTestHitX[index] = tempHitGP.x();
+              confTestHitY[index] = tempHitGP.y();
+              confTestHitZ[index] = tempHitGP.z();
               hitsVFATnum->Fill(vfat-1,mRoll-1,index);
               nTrajRecHit++;
               g_nNumMatched++;
 
-              residualPhi->Fill(recHitGP.x()-gtrp.x());
-              residualEta->Fill(recHitGP.y()-gtrp.y());
+              residualPhi->Fill(tempHitGP.x()-gtrp.x());
+              residualEta->Fill(tempHitGP.y()-gtrp.y());
+
+              GEMDetId confirmedHitID((*tmpRecHit).rawId());
+              int chConfHit = confirmedHitID.chamber()+confirmedHitID.layer()-2;
+              int etaConfHit = confirmedHitID.roll()-1;
+
+              associatedHits2DPerLayer->Fill(tempHitGP.x(),etaConfHit,chConfHit%10);
+
+              for ( GEMRecHitCollection::const_iterator rechit = gemRecHits->begin(); rechit != gemRecHits->end(); ++rechit )
+              {
+                GlobalPoint rechitGP = GEMGeometry_->idToDet((*rechit).gemId())->surface().toGlobal(rechit->localPosition());
+
+                if (fabs(rechitGP.x()-tempHitGP.x())<0.01 && fabs(rechitGP.y()-tempHitGP.y())<0.01 && fabs(rechitGP.z()-tempHitGP.z())<0.01)
+                {
+                  associatedHitsClusterSize->Fill(chConfHit,etaConfHit,(*rechit).clusterSize());
+                  break;
+                }
+              }
             }
           }
         }

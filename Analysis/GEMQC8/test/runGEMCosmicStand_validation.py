@@ -146,15 +146,6 @@ process.tmtFilter.mpList = cms.untracked.vint32(options.mps)
 
 strOutput = runConfig.OutputFileName
 
-process.output = cms.OutputModule("PoolOutputModule",
-                                  SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring('validation_step')),
-                                  dataset = cms.untracked.PSet(dataTier = cms.untracked.string('RECO'),filterName = cms.untracked.string('')),
-                                  eventAutoFlushCompressedSize = cms.untracked.int32(10485760),
-                                  fileName = cms.untracked.string('file:'+strOutput),
-                                  outputCommands = cms.untracked.vstring( ('keep *')),
-                                  splitLevel = cms.untracked.int32(0)
-                                  )
-
 # Additional output definition
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
@@ -165,6 +156,10 @@ process.muonGEMDigis.InputLabel = cms.InputTag("source","gemLocalModeDataSource"
 process.muonGEMDigis.useDBEMap = True
 process.muonGEMDigis.unPackStatusDigis = True
 
+# Getting hot and dead strips files
+hotStripsFile = "Analysis/GEMQC8/data/HotStripsTables/Mask_HotStrips_run" + str(run_number) + ".dat"
+deadStripsFile = "Analysis/GEMQC8/data/DeadStripsTables/Mask_DeadStrips_run" + str(run_number) + ".dat"
+
 # digi to reco
 process.load('RecoLocalMuon.GEMRecHit.gemRecHits_cfi')
 
@@ -172,7 +167,16 @@ process.gemRecHits = cms.EDProducer("GEMRecHitProducer",
                                     recAlgoConfig = cms.PSet(),
                                     recAlgo = cms.string('GEMRecHitStandardAlgo'),
                                     gemDigiLabel = cms.InputTag("muonGEMDigis"),
+                                    maskFile = cms.FileInPath(hotStripsFile),
+                                    deadFile = cms.FileInPath(deadStripsFile),
+                                    applyMasking = cms.bool(True)
                                     )
+
+# Get certified events from file
+pyhtonModulesPath = os.path.abspath("runGEMCosmicStand_validation.py").split('QC8Test')[0]+'QC8Test/src/Analysis/GEMQC8/python/'
+sys.path.insert(1,pyhtonModulesPath)
+from readCertEvtsFromFile import GetCertifiedEvents
+certEvts = GetCertifiedEvents(run_number)
 
 # Reconstruction of muon track
 process.load('RecoMuon.TrackingTools.MuonServiceProxy_cff')
@@ -187,8 +191,10 @@ process.GEMCosmicMuonForQC8 = cms.EDProducer("GEMCosmicMuonForQC8",
                                              trackResX = cms.double(runConfig.trackResX),
                                              trackResY = cms.double(runConfig.trackResY),
                                              MulSigmaOnWindow = cms.double(runConfig.MulSigmaOnWindow),
+                                             minNumberOfRecHitsPerTrack = cms.uint32(runConfig.minRecHitsPerTrack),
                                              SuperChamberType = cms.vstring(SuperChType),
                                              SuperChamberSeedingLayers = cms.vdouble(SuperChSeedingLayers),
+                                             tripEvents = cms.vstring(certEvts),
                                              MuonSmootherParameters = cms.PSet(PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
                                                                                PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
                                                                                RescalingFactor = cms.double(5.0)
@@ -197,12 +203,6 @@ process.GEMCosmicMuonForQC8 = cms.EDProducer("GEMCosmicMuonForQC8",
 process.GEMCosmicMuonForQC8.ServiceParameters.GEMLayers = cms.untracked.bool(True)
 process.GEMCosmicMuonForQC8.ServiceParameters.CSCLayers = cms.untracked.bool(False)
 process.GEMCosmicMuonForQC8.ServiceParameters.RPCLayers = cms.bool(False)
-
-# Fast Efficiency - Get certified events from file
-pyhtonModulesPath = os.path.abspath("runGEMCosmicStand_fast_efficiency.py").split('QC8Test')[0]+'QC8Test/src/Analysis/GEMQC8/python/'
-sys.path.insert(1,pyhtonModulesPath)
-from readCertEvtsFromFile import GetCertifiedEvents
-certEvts = GetCertifiedEvents(run_number)
 
 # Validation
 process.ValidationQC8 = cms.EDProducer('ValidationQC8',
@@ -242,14 +242,12 @@ process.rawTOhits_step = cms.Path(process.muonGEMDigis+process.gemRecHits)
 process.reconstruction_step = cms.Path(process.GEMCosmicMuonForQC8)
 process.validation_step = cms.Path(process.ValidationQC8)
 process.endjob_step = cms.EndPath(process.endOfProcess)
-process.output_step = cms.EndPath(process.output)
 
 # Schedule definition
 process.schedule = cms.Schedule(process.rawTOhits_step,
                                 process.reconstruction_step,
                                 process.validation_step,
-                                process.endjob_step,
-                                process.output_step
+                                process.endjob_step
                                 )
 
 # enable validation event filtering
